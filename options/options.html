@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Route Capture Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>Route Capture & Analysis Settings</h1>
+        <p>
+          Configure how routes are captured and analyzed for component structure
+        </p>
+      </header>
+
+      <main class="main">
+        <form id="settingsForm">
+          <!-- Capture Settings Section -->
+          <section class="section">
+            <h2>Capture Settings</h2>
+
+            <div class="form-group">
+              <label for="screenshotQuality">Screenshot Quality</label>
+              <select id="screenshotQuality" name="screenshotQuality">
+                <option value="high">High (Best quality, larger files)</option>
+                <option value="medium">Medium (Balanced)</option>
+                <option value="low">
+                  Low (Faster processing, smaller files)
+                </option>
+              </select>
+              <small
+                >Higher quality captures provide better AI analysis but take
+                more time</small
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="waitTime">Page Load Wait Time</label>
+              <select id="waitTime" name="waitTime">
+                <option value="1000">1 second</option>
+                <option value="2000">2 seconds</option>
+                <option value="3000">3 seconds (recommended)</option>
+                <option value="5000">5 seconds</option>
+                <option value="10000">10 seconds</option>
+              </select>
+              <small
+                >How long to wait for dynamic content to load before
+                capturing</small
+              >
+            </div>
+
+            <div class="form-group">
+              <label>
+                <input
+                  type="checkbox"
+                  id="captureFullPage"
+                  name="captureFullPage"
+                  checked
+                />
+                Capture full page (including content below the fold)
+              </label>
+              <small>Uncheck to only capture the visible viewport</small>
+            </div>
+
+            <div class="form-group">
+              <label>
+                <input
+                  type="checkbox"
+                  id="excludeHiddenElements"
+                  name="excludeHiddenElements"
+                  checked
+                />
+                Exclude hidden elements from analysis
+              </label>
+              <small>Skip elements that are not visible to users</small>
+            </div>
+          </section>
+
+          <!-- Documentation Settings Section -->
+          <section class="section">
+            <h2>Documentation & Export</h2>
+
+            <div class="form-group">
+              <label for="documentationFormat">Documentation Format</label>
+              <select id="documentationFormat" name="documentationFormat">
+                <option value="markdown">Markdown</option>
+                <option value="html">HTML</option>
+                <option value="json">JSON</option>
+              </select>
+              <small>Choose the format for generated documentation</small>
+            </div>
+
+            <div class="form-group">
+              <label>
+                <input
+                  type="checkbox"
+                  id="includeAccessibility"
+                  name="includeAccessibility"
+                  checked
+                />
+                Include accessibility attributes in analysis
+              </label>
+              <small
+                >Identify and document accessibility features in
+                components</small
+              >
+            </div>
+          </section>
+
+          <!-- Advanced Settings Section -->
+          <section class="section">
+            <h2>Advanced Settings</h2>
+
+            <div class="form-group">
+              <label for="maxRoutes">Maximum Routes to Process</label>
+              <input
+                type="number"
+                id="maxRoutes"
+                name="maxRoutes"
+                min="1"
+                max="100"
+                value="20"
+              />
+              <small
+                >Limit the number of routes that can be processed at once</small
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="segmentationThreshold"
+                >Component Detection Sensitivity</label
+              >
+              <input
+                type="range"
+                id="segmentationThreshold"
+                name="segmentationThreshold"
+                min="0.3"
+                max="0.9"
+                step="0.1"
+                value="0.7"
+              />
+              <span id="thresholdValue">0.7</span>
+              <small
+                >Higher values detect fewer, more distinct components</small
+              >
+            </div>
+
+            <div class="form-group">
+              <label>
+                <input
+                  type="checkbox"
+                  id="enableBatchProcessing"
+                  name="enableBatchProcessing"
+                  checked
+                />
+                Enable batch processing
+              </label>
+              <small
+                >Process multiple routes simultaneously for faster
+                completion</small
+              >
+            </div>
+
+            <div class="form-group">
+              <label>
+                <input
+                  type="checkbox"
+                  id="enableCaching"
+                  name="enableCaching"
+                  checked
+                />
+                Enable result caching
+              </label>
+              <small
+                >Cache analysis results to speed up repeated processing</small
+              >
+            </div>
+          </section>
+
+          <!-- Action Buttons -->
+          <div class="actions">
+            <button type="button" id="resetBtn" class="btn btn-secondary">
+              Reset to Defaults
+            </button>
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+          </div>
+        </form>
+      </main>
+
+      <!-- Status Message -->
+      <div
+        id="statusMessage"
+        class="status-message"
+        style="display: none"
+      ></div>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Route Capture & Component Analysis</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <div class="logo">
+          <img src="../assets/icons/icon32.png" alt="Extension Icon" />
+          <h1>Route Capture</h1>
+        </div>
+        <button class="settings-btn" id="settingsBtn" title="Settings">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="3"></circle>
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V6a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+            ></path>
+          </svg>
+        </button>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main">
+        <!-- Status Bar -->
+        <div class="status-bar" id="statusBar">
+          <span class="status-text" id="statusText">Ready to scan routes</span>
+          <div class="status-indicator" id="statusIndicator"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button class="btn btn-primary" id="scanBtn">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            Scan Routes
+          </button>
+          <button class="btn btn-secondary" id="refreshBtn" disabled>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path
+                d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"
+              ></path>
+            </svg>
+            Refresh
+          </button>
+        </div>
+
+        <!-- Route List -->
+        <div class="route-section">
+          <div class="section-header">
+            <h2>Discovered Routes</h2>
+            <div class="route-controls">
+              <button class="btn btn-small" id="selectAllBtn">
+                Select All
+              </button>
+              <button class="btn btn-small" id="deselectAllBtn">
+                Deselect All
+              </button>
+            </div>
+          </div>
+
+          <!-- Search/Filter -->
+          <div class="search-container">
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Search routes..."
+              class="search-input"
+            />
+            <select id="filterSelect" class="filter-select">
+              <option value="all">All Types</option>
+              <option value="static">Static</option>
+              <option value="spa">SPA</option>
+              <option value="navigation">Navigation</option>
+              <option value="sitemap">Sitemap</option>
+            </select>
+          </div>
+
+          <!-- Route List Container -->
+          <div class="route-list" id="routeList">
+            <div class="empty-state" id="emptyState">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              <p>No routes found</p>
+              <small>Click "Scan Routes" to discover routes on this page</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div
+          class="progress-section"
+          id="progressSection"
+          style="display: none"
+        >
+          <h3>Processing Routes</h3>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-text" id="progressText">0% complete</div>
+        </div>
+
+        <!-- Action Buttons Bottom -->
+        <div class="bottom-actions">
+          <button class="btn btn-success" id="captureBtn" disabled>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+              ></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            Capture Selected Routes
+          </button>
+          <button class="btn btn-info" id="exportBtn" disabled>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export Analysis
+          </button>
+        </div>
+      </main>
+    </div>
+
+    <script src="../lib/markdown-generator.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
