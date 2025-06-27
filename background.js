@@ -1,6 +1,9 @@
 // Background script for Route Capture Extension
+importScripts('lib/db.js');
+
 class BackgroundService {
   constructor() {
+    this.db = new ImageDB();
     this.init();
   }
 
@@ -41,9 +44,6 @@ class BackgroundService {
       console.log('Background: received message:', request.action);
 
       switch (request.action) {
-        case 'captureScreenshot':
-          return await this.captureScreenshot(request.tabId);
-
         case 'downloadFiles':
           console.log('Background: handling downloadFiles');
           return await this.downloadFiles(request.files);
@@ -55,6 +55,10 @@ class BackgroundService {
         case 'getSettings':
           return await this.getSettings();
 
+        case 'exportAllScreenshots':
+          console.log('Background: handling exportAllScreenshots');
+          return await this.exportAllScreenshots();
+
         default:
           console.warn('Unknown action:', request.action);
           return { success: false, error: 'Unknown action' };
@@ -65,56 +69,35 @@ class BackgroundService {
     }
   }
 
-  async captureScreenshot(_tabId) {
+  async exportAllScreenshots() {
     try {
-      // Add longer delay to avoid quota limits and ensure page is ready
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const screenshots = await this.db.getAllScreenshots();
+      console.log('Screenshots found in DB:', screenshots);
+      if (!screenshots || screenshots.length === 0) {
+        return { success: false, error: 'No screenshots found to export.' };
+      }
 
-      const dataUrl = await chrome.tabs.captureVisibleTab(null, {
-        format: 'png',
-        quality: 90, // Reduced quality to avoid quota issues
-      });
+      for (const screenshot of screenshots) {
+        if (!screenshot.dataUrl || typeof screenshot.dataUrl !== 'string') {
+          console.warn('Skipping screenshot with missing or invalid dataUrl:', screenshot);
+          continue;
+        }
+        const safeRouteName = (screenshot.routeUrl || screenshot.id || 'route').replace(/[^a-zA-Z0-9]/g, '_');
+        const filename = `screenshot-${safeRouteName}.png`;
 
-      return { success: true, dataUrl };
+        await chrome.downloads.download({
+          url: screenshot.dataUrl,
+          filename: filename,
+          saveAs: false,
+        });
+
+        // Add a small delay between downloads to prevent issues
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      return { success: true };
     } catch (error) {
-      console.error('Screenshot capture failed:', error);
-
-      // Handle specific quota error
-      if (
-        error.message.includes('quota') ||
-        error.message.includes('MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND')
-      ) {
-        console.warn(
-          'Screenshot quota exceeded, continuing without screenshot'
-        );
-        return {
-          success: false,
-          error:
-            'Screenshot quota exceeded - continuing analysis without screenshots',
-          continue: true,
-          quotaExceeded: true,
-        };
-      }
-
-      // Handle permission error
-      if (
-        error.message.includes('activeTab') ||
-        error.message.includes('not in effect')
-      ) {
-        console.warn(
-          'Screenshot permission not available, continuing without screenshot'
-        );
-        return {
-          success: false,
-          error:
-            'Screenshot permission not available - please interact with the page first',
-          continue: true,
-          permissionError: true,
-        };
-      }
-
-      // Don't fail the entire process if screenshot fails
-      return { success: false, error: error.message, continue: true };
+      console.error('Screenshot export failed:', error);
+      return { success: false, error: error.message };
     }
   }
 
@@ -151,6 +134,9 @@ class BackgroundService {
 
       console.log('Processing routes:', routes.length, 'routes');
 
+      // Clear old screenshots before starting a new capture session
+      await this.db.clearScreenshots();
+
       // Store routes for processing
       await chrome.storage.local.set({
         pendingRoutes: routes,
@@ -169,27 +155,9 @@ class BackgroundService {
 
   async startRouteProcessing(routes) {
     console.log('startRouteProcessing called with:', typeof routes, routes);
-
-    // Additional validation to prevent iteration errors
-    if (!Array.isArray(routes)) {
-      console.error('Routes is not an array:', routes);
-      await chrome.storage.local.set({
-        processingStatus: 'error',
-        processingError: 'Invalid routes data: not an array',
-      });
-      return;
-    }
-
-    if (routes.length === 0) {
-      console.error('Routes array is empty');
-      await chrome.storage.local.set({
-        processingStatus: 'error',
-        processingError: 'No routes to process',
-      });
-      return;
-    }
-
     await chrome.storage.local.set({ processingStatus: 'in-progress' });
+
+    const originalTab = (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
 
     try {
       for (let i = 0; i < routes.length; i++) {
@@ -197,12 +165,12 @@ class BackgroundService {
         console.log(`Processing route ${i + 1}/${routes.length}:`, route);
 
         // Update progress
-        await chrome.storage.local.set({
-          processingProgress: Math.round((i / routes.length) * 100),
-        });
+        const progress = Math.round(((i + 1) / routes.length) * 100);
+        await chrome.storage.local.set({ processingProgress: progress });
+        chrome.runtime.sendMessage({ action: 'processingProgress', progress });
 
-        // Process individual route
-        await this.processIndividualRoute(route);
+        // Navigate, capture, and save
+        await this.processAndCaptureRoute(route);
       }
 
       await chrome.storage.local.set({
@@ -211,32 +179,57 @@ class BackgroundService {
       });
 
       // Notify popup of completion
-      try {
-        chrome.runtime.sendMessage({
-          action: 'processingComplete',
-          success: true,
-        });
-      } catch (error) {
-        console.log('Could not notify popup (likely closed):', error.message);
-      }
+      chrome.runtime.sendMessage({ action: 'processingComplete', success: true });
     } catch (error) {
+      console.error('Route processing failed:', error);
       await chrome.storage.local.set({
         processingStatus: 'error',
         processingError: error.message,
       });
-
-      try {
-        chrome.runtime.sendMessage({
-          action: 'processingComplete',
-          success: false,
-          error: error.message,
-        });
-      } catch (msgError) {
-        console.log(
-          'Could not notify popup of error (likely closed):',
-          msgError.message
-        );
+      chrome.runtime.sendMessage({ action: 'processingComplete', success: false, error: error.message });
+    } finally {
+      // Restore focus to the original tab
+      if (originalTab) {
+        await chrome.tabs.update(originalTab.id, { active: true }).catch(e => console.warn('Failed to restore original tab:', e));
       }
+    }
+  }
+
+  async processAndCaptureRoute(route) {
+    try {
+      const tab = await chrome.tabs.create({ url: route.fullUrl, active: true });
+
+      // Wait for the tab to be completely loaded
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          chrome.tabs.onUpdated.removeListener(listener);
+          reject(new Error(`Timeout waiting for route to load: ${route.fullUrl}`));
+        }, 30000); // 30-second timeout
+
+        const listener = (tabId, changeInfo) => {
+          if (tabId === tab.id && changeInfo.status === 'complete') {
+              // Additional wait for dynamic content to render
+              setTimeout(() => {
+                clearTimeout(timeout);
+                chrome.tabs.onUpdated.removeListener(listener);
+                resolve();
+              }, 3000); // 3-second grace period
+          }
+        };
+        chrome.tabs.onUpdated.addListener(listener);
+      });
+
+      // Capture the visible part of the tab
+      const dataUrl = await chrome.tabs.captureVisibleTab(tab.id, { format: 'png' });
+
+      // Save screenshot to the database
+      await this.db.saveScreenshot({ id: route.id, routeUrl: route.url, dataUrl });
+      console.log('Saved screenshot:', { id: route.id, routeUrl: route.url, dataUrl: dataUrl?.slice(0, 30) });
+
+      // Close the processed tab
+      await chrome.tabs.remove(tab.id);
+    } catch (error) {
+      console.error('Error capturing/saving screenshot for route:', route, error);
     }
   }
 

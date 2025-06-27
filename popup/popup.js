@@ -28,6 +28,9 @@ class PopupController {
       .getElementById('exportBtn')
       .addEventListener('click', () => this.exportComponents());
     document
+      .getElementById('exportImagesBtn')
+      .addEventListener('click', () => this.exportImages());
+    document
       .getElementById('settingsBtn')
       .addEventListener('click', () => this.openSettings());
 
@@ -448,6 +451,32 @@ class PopupController {
     }
   }
 
+  async exportImages() {
+    this.setStatus('Exporting images...', 'loading');
+    this.setButtonState('exportImagesBtn', true);
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'exportAllScreenshots',
+      });
+
+      if (response && response.success) {
+        this.setStatus('Images exported successfully', 'success');
+      } else {
+        if (response && response.error && response.error.includes('No screenshots found')) {
+          this.setStatus('No screenshots found. Please capture routes first.', 'error');
+        } else {
+          throw new Error(response?.error || 'Image export failed');
+        }
+      }
+    } catch (error) {
+      console.error('Image export failed:', error);
+      this.setStatus(`Failed to export images: ${error.message}`, 'error');
+    } finally {
+      this.setButtonState('exportImagesBtn', false);
+    }
+  }
+
   openSettings() {
     chrome.runtime.openOptionsPage();
   }
@@ -479,6 +508,11 @@ class PopupController {
     const routeList = document.getElementById('routeList');
     const emptyState = document.getElementById('emptyState');
 
+    if (!emptyState || !routeList) {
+      console.warn('Missing emptyState or routeList element in DOM');
+      return;
+    }
+
     // Filter routes
     let filteredRoutes = this.routes;
 
@@ -508,8 +542,8 @@ class PopupController {
       .map(
         route => `
       <div class="route-item">
-        <input type="checkbox" class="route-checkbox" 
-               data-route-id="${route.id}" 
+        <input type="checkbox" class="route-checkbox"
+               data-route-id="${route.id}"
                ${this.selectedRoutes.has(route.id) ? 'checked' : ''}>
         <div class="route-info">
           <div class="route-title">${this.escapeHtml(route.title)}</div>
@@ -547,8 +581,22 @@ class PopupController {
   }
 
   updateCaptureButton() {
+    const selectedCount = this.selectedRoutes.size;
     const captureBtn = document.getElementById('captureBtn');
-    captureBtn.disabled = this.selectedRoutes.size === 0 || this.isProcessing;
+    const exportBtn = document.getElementById('exportBtn');
+    const exportImagesBtn = document.getElementById('exportImagesBtn');
+
+    if (captureBtn) {
+      captureBtn.disabled = selectedCount === 0;
+      captureBtn.textContent =
+        selectedCount > 0 ? `Capture ${selectedCount} Routes` : 'Capture Routes';
+    }
+    if (exportBtn) {
+      exportBtn.disabled = this.isProcessing || this.routes.length === 0;
+    }
+    if (exportImagesBtn) {
+      exportImagesBtn.disabled = this.isProcessing || this.routes.length === 0;
+    }
   }
 
   showEmptyState() {
@@ -560,6 +608,7 @@ class PopupController {
     document.getElementById('progressSection').style.display = 'block';
     document.getElementById('captureBtn').disabled = true;
     document.getElementById('exportBtn').disabled = true;
+    document.getElementById('exportImagesBtn').disabled = true;
     this.updateProgress(0);
   }
 
@@ -572,25 +621,36 @@ class PopupController {
   updateProgress(percentage) {
     const progressFill = document.getElementById('progressFill');
     const progressText = document.getElementById('progressText');
-
-    progressFill.style.width = `${percentage}%`;
-    progressText.textContent = `${percentage}% complete`;
+    if (progressFill && progressText) {
+      progressFill.style.width = `${percentage}%`;
+      progressText.textContent = `${percentage}% complete`;
+    }
   }
 
   handleBackgroundMessage(request) {
+    console.log('Popup received message:', request);
+
     switch (request.action) {
+      case 'processingProgress':
+        this.updateProgress(request.progress);
+        this.setStatus(`Processing route... ${request.progress}%`, 'loading');
+        break;
+
       case 'processingComplete':
         this.stopProcessing();
         if (request.success) {
-          this.setStatus('Routes processed successfully', 'success');
+          this.setStatus('Processing complete!', 'success');
+          // Re-enable export buttons now that processing is done
           document.getElementById('exportBtn').disabled = false;
+          document.getElementById('exportImagesBtn').disabled = false;
         } else {
-          this.setStatus(`Processing failed: ${request.error}`, 'error');
+          this.setStatus(`Error: ${request.error}`, 'error');
         }
         break;
 
-      case 'processingProgress':
-        this.updateProgress(request.progress);
+      case 'updateRoutes':
+        this.routes = request.routes;
+        this.renderRoutes();
         break;
     }
   }

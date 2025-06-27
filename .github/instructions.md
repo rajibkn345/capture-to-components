@@ -26,6 +26,19 @@ Step-by-Step Plan:
    - Design the tool to be extensible (e.g., support for plugins, different frameworks, or export formats).
    - Optimize for performance by batching or parallelizing analysis for large sites and caching intermediate results.
 
+
+
+## Common Tasks & Patterns
+
+-ensure consistent naming convention
+-follow existing prompt structure
+-use optimized code
+-use clean code
+-follow best practice always
+
 Ultimate Goal:
 
 - Enable rapid, accurate, and maintainable website cloning by leveraging AI to automate the extraction, documentation, and code generation of reusable components, ensuring the resulting site is modular, scalable, and easy to maintain.
+
+
+NB: Dont modify this file without my permission ,and you must follow this file instruction when executing a prompt.
