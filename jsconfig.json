@@ -6,10 +6,12 @@
     "baseUrl": ".",
     "paths": {
       "/*": ["*"]
-    }
+    },
+    "typeRoots": ["./types.d.ts"]
   },
   "include": [
-    "./**/*.js"
+    "./**/*.js",
+    "./types.d.ts"
   ],
   "exclude": [
     "node_modules"

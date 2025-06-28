@@ -586,6 +586,12 @@
               isEmpty: this.isElementEmpty(element),
               hasInteractiveElements: this.hasInteractiveChildren(element),
               accessibility: this.analyzeAccessibility(element),
+              // Enhanced analysis for logical groupings
+              logicalGrouping: this.analyzeLogicalGrouping(element),
+              nestedStructure: this.analyzeNestedStructure(element),
+              layoutPattern: this.identifyLayoutPattern(element),
+              componentInstances: this.findComponentInstances(element),
+              reusabilityFactors: this.analyzeReusabilityFactors(element),
             };
 
             sections.push(section);
@@ -1030,7 +1036,822 @@
       return modals;
     }
 
-    // Utility methods
+    // Enhanced analysis methods for logical grouping and nested structures
+    analyzeLogicalGrouping(element) {
+      return {
+        semanticGroup: this.identifySemanticGroup(element),
+        functionalGroup: this.identifyFunctionalGroup(element),
+        visualGroup: this.identifyVisualGroup(element),
+        contentGroup: this.identifyContentGroup(element),
+        siblingRelations: this.analyzeSiblingRelations(element),
+        parentChildRelations: this.analyzeParentChildRelations(element),
+      };
+    }
+
+    analyzeNestedStructure(element) {
+      return {
+        nestingLevel: this.getElementDepth(element),
+        nestedSections: this.findNestedSections(element),
+        componentHierarchy: this.buildComponentHierarchy(element),
+        layoutStructure: this.analyzeElementLayout(element),
+        repeatingPatterns: this.findRepeatingPatterns(element),
+        dataStructure: this.inferDataStructure(element),
+      };
+    }
+
+    identifyLayoutPattern(element) {
+      const computedStyle = window.getComputedStyle(element);
+      const children = Array.from(element.children);
+      
+      return {
+        displayType: computedStyle.display,
+        layoutMethod: this.determineLayoutMethod(computedStyle, children),
+        gridPattern: this.analyzeGridPattern(element, computedStyle),
+        flexPattern: this.analyzeFlexPattern(element, computedStyle),
+        responsiveBreakpoints: this.detectResponsiveBreakpoints(element),
+        layoutComplexity: this.calculateLayoutComplexity(element),
+      };
+    }
+
+    findComponentInstances(element) {
+      return {
+        reusableComponents: this.identifyReusableComponents(element),
+        componentVariations: this.findComponentVariations(element),
+        componentFrequency: this.calculateComponentFrequency(element),
+        commonPatterns: this.extractCommonPatterns(element),
+        atomicComponents: this.identifyAtomicComponents(element),
+        molecularComponents: this.identifyMolecularComponents(element),
+      };
+    }
+
+    analyzeReusabilityFactors(element) {
+      return {
+        reusabilityScore: this.calculateReusabilityScore(element),
+        abstractionLevel: this.determineAbstractionLevel(element),
+        dependencyAnalysis: this.analyzeDependencies(element),
+        configurationOptions: this.identifyConfigurationOptions(element),
+        scalabilityFactors: this.analyzeScalabilityFactors(element),
+        maintenanceComplexity: this.assessMaintenanceComplexity(element),
+      };
+    }
+
+    // Helper methods for semantic analysis
+    identifySemanticGroup(element) {
+      const semanticTags = ['header', 'nav', 'main', 'article', 'section', 'aside', 'footer'];
+      const tagName = element.tagName.toLowerCase();
+      const role = element.getAttribute('role');
+      
+      if (semanticTags.includes(tagName)) {
+        return tagName;
+      }
+      if (role) {
+        return role;
+      }
+      
+      const parent = element.closest(semanticTags.join(','));
+      return parent ? parent.tagName.toLowerCase() : 'content';
+    }
+
+    identifyFunctionalGroup(element) {
+      const classList = Array.from(element.classList);
+      const functionKeywords = ['nav', 'menu', 'form', 'search', 'filter', 'carousel', 'modal', 'dropdown'];
+      
+      for (const keyword of functionKeywords) {
+        if (classList.some(cls => cls.includes(keyword))) {
+          return keyword;
+        }
+      }
+      
+      if (element.querySelector('form')) return 'form-container';
+      if (element.querySelector('button, .btn')) return 'interactive';
+      if (element.querySelector('img, video')) return 'media';
+      
+      return 'content';
+    }
+
+    identifyVisualGroup(element) {
+      const computedStyle = window.getComputedStyle(element);
+      const display = computedStyle.display;
+      const position = computedStyle.position;
+      
+      if (display.includes('grid')) return 'grid-container';
+      if (display.includes('flex')) return 'flex-container';
+      if (position === 'fixed') return 'fixed-element';
+      if (position === 'sticky') return 'sticky-element';
+      if (position === 'absolute') return 'absolute-element';
+      
+      return 'normal-flow';
+    }
+
+    identifyContentGroup(element) {
+      const textContent = element.textContent?.trim() || '';
+      const hasImages = element.querySelector('img, picture, svg');
+      const hasVideo = element.querySelector('video');
+      const hasForm = element.querySelector('form, input, textarea, select');
+      const hasLinks = element.querySelector('a');
+      
+      if (hasForm) return 'form-content';
+      if (hasVideo) return 'video-content';
+      if (hasImages && textContent.length > 100) return 'mixed-content';
+      if (hasImages) return 'image-content';
+      if (hasLinks) return 'link-content';
+      if (textContent.length > 50) return 'text-content';
+      
+      return 'minimal-content';
+    }
+
+    analyzeSiblingRelations(element) {
+      const siblings = Array.from(element.parentElement?.children || []);
+      const elementIndex = siblings.indexOf(element);
+      
+      return {
+        totalSiblings: siblings.length,
+        position: elementIndex + 1,
+        isFirst: elementIndex === 0,
+        isLast: elementIndex === siblings.length - 1,
+        similarSiblings: this.findSimilarSiblings(element, siblings),
+        siblingPattern: this.detectSiblingPattern(siblings),
+      };
+    }
+
+    analyzeParentChildRelations(element) {
+      const parent = element.parentElement;
+      const children = Array.from(element.children);
+      
+      return {
+        parentType: parent?.tagName.toLowerCase() || 'none',
+        parentRole: parent?.getAttribute('role') || 'none',
+        childCount: children.length,
+        childTypes: children.map(child => child.tagName.toLowerCase()),
+        hasNestedComponents: this.hasNestedComponents(element),
+        compositionPattern: this.analyzeCompositionPattern(element),
+      };
+    }
+
+    // Helper methods for nested structure analysis
+    findNestedSections(element) {
+      const nestedSections = [];
+      const semanticSelectors = ['section', 'article', 'header', 'footer', 'nav', 'aside', 'main'];
+      
+      semanticSelectors.forEach(selector => {
+        const nested = element.querySelectorAll(selector);
+        nested.forEach((nestedEl, index) => {
+          nestedSections.push({
+            type: selector,
+            depth: this.getElementDepth(nestedEl) - this.getElementDepth(element),
+            tagName: nestedEl.tagName.toLowerCase(),
+          });
+        });
+      });
+      
+      return nestedSections;
+    }
+
+    buildComponentHierarchy(element) {
+      const hierarchy = {
+        level0: [],
+        level1: [],
+        level2: [],
+        level3: [],
+        deeper: [],
+      };
+      
+      const walkChildren = (el, level = 0) => {
+        const children = Array.from(el.children);
+        children.forEach(child => {
+          const componentInfo = {
+            tagName: child.tagName.toLowerCase(),
+            classes: Array.from(child.classList),
+            id: child.id,
+            level: level,
+          };
+          
+          if (level <= 3) {
+            hierarchy[`level${level}`].push(componentInfo);
+          } else {
+            hierarchy.deeper.push(componentInfo);
+          }
+          
+          if (level < 5) { // Prevent infinite recursion
+            walkChildren(child, level + 1);
+          }
+        });
+      };
+      
+      walkChildren(element);
+      return hierarchy;
+    }
+
+    analyzeElementLayout(element) {
+      const computedStyle = window.getComputedStyle(element);
+      return {
+        display: computedStyle.display,
+        position: computedStyle.position,
+        flexDirection: computedStyle.flexDirection,
+        gridTemplate: computedStyle.gridTemplate,
+        alignItems: computedStyle.alignItems,
+        justifyContent: computedStyle.justifyContent,
+      };
+    }
+
+    findRepeatingPatterns(element) {
+      const children = Array.from(element.children);
+      const patterns = [];
+      
+      // Group children by similar structure
+      const grouped = new Map();
+      children.forEach(child => {
+        const signature = this.getElementSignature(child);
+        if (!grouped.has(signature)) {
+          grouped.set(signature, []);
+        }
+        grouped.get(signature).push(child);
+      });
+      
+      grouped.forEach((group, signature) => {
+        if (group.length > 1) {
+          patterns.push({
+            signature,
+            count: group.length,
+            elements: group.map(el => ({
+              tagName: el.tagName.toLowerCase(),
+              classes: Array.from(el.classList),
+            })),
+          });
+        }
+      });
+      
+      return patterns;
+    }
+
+    inferDataStructure(element) {
+      const structure = {
+        type: 'unknown',
+        isCollection: false,
+        itemCount: 0,
+        hasSchema: false,
+      };
+      
+      // Check for list-like structures
+      if (element.matches('ul, ol, dl') || element.classList.contains('list')) {
+        structure.type = 'list';
+        structure.isCollection = true;
+        structure.itemCount = element.children.length;
+      }
+      
+      // Check for table-like structures
+      if (element.matches('table') || element.classList.contains('table')) {
+        structure.type = 'table';
+        structure.isCollection = true;
+        structure.itemCount = element.querySelectorAll('tr').length;
+      }
+      
+      // Check for grid-like structures
+      if (element.classList.contains('grid') || window.getComputedStyle(element).display.includes('grid')) {
+        structure.type = 'grid';
+        structure.isCollection = true;
+        structure.itemCount = element.children.length;
+      }
+      
+      return structure;
+    }
+
+    // Layout analysis methods
+    determineLayoutMethod(computedStyle, children) {
+      if (computedStyle.display.includes('grid')) {
+        return 'css-grid';
+      }
+      if (computedStyle.display.includes('flex')) {
+        return 'flexbox';
+      }
+      if (computedStyle.float !== 'none') {
+        return 'float';
+      }
+      if (computedStyle.position === 'absolute' || computedStyle.position === 'fixed') {
+        return 'absolute';
+      }
+      return 'normal-flow';
+    }
+
+    analyzeGridPattern(element, computedStyle) {
+      if (!computedStyle.display.includes('grid')) {
+        return null;
+      }
+      
+      return {
+        templateColumns: computedStyle.gridTemplateColumns,
+        templateRows: computedStyle.gridTemplateRows,
+        gap: computedStyle.gap,
+        areas: computedStyle.gridTemplateAreas,
+      };
+    }
+
+    analyzeFlexPattern(element, computedStyle) {
+      if (!computedStyle.display.includes('flex')) {
+        return null;
+      }
+      
+      return {
+        direction: computedStyle.flexDirection,
+        wrap: computedStyle.flexWrap,
+        justifyContent: computedStyle.justifyContent,
+        alignItems: computedStyle.alignItems,
+        gap: computedStyle.gap,
+      };
+    }
+
+    detectResponsiveBreakpoints(element) {
+      const breakpoints = [];
+      const classNames = Array.from(element.classList);
+      
+      // Common responsive class patterns
+      const patterns = [
+        /sm:|small:/,
+        /md:|medium:/,
+        /lg:|large:/,
+        /xl:|extra-large:/,
+        /mobile/,
+        /tablet/,
+        /desktop/,
+      ];
+      
+      patterns.forEach(pattern => {
+        const matches = classNames.filter(cls => pattern.test(cls));
+        if (matches.length > 0) {
+          breakpoints.push(...matches);
+        }
+      });
+      
+      return breakpoints;
+    }
+
+    calculateLayoutComplexity(element) {
+      let complexity = 0;
+      
+      // Add points for nested layouts
+      const nestedLayouts = element.querySelectorAll('[style*="display:"], .grid, .flex, .container');
+      complexity += nestedLayouts.length * 2;
+      
+      // Add points for positioning
+      const positioned = element.querySelectorAll('[style*="position:"], .absolute, .fixed, .relative');
+      complexity += positioned.length;
+      
+      // Add points for depth
+      complexity += this.getElementDepth(element);
+      
+      return Math.min(complexity, 100); // Cap at 100
+    }
+
+    // Component analysis methods
+    identifyReusableComponents(element) {
+      const components = [];
+      const componentSelectors = [
+        '.btn, .button',
+        '.card',
+        '.modal',
+        '.dropdown',
+        '.tab',
+        '.accordion',
+        '.carousel',
+        '.pagination',
+      ];
+      
+      componentSelectors.forEach(selector => {
+        const matches = element.querySelectorAll(selector);
+        if (matches.length > 0) {
+          components.push({
+            type: selector.replace(/[.,]/g, ''),
+            count: matches.length,
+            reusable: matches.length > 1,
+          });
+        }
+      });
+      
+      return components;
+    }
+
+    findComponentVariations(element) {
+      const variations = [];
+      const children = Array.from(element.children);
+      
+      // Group by similar tag and class patterns
+      const groups = new Map();
+      children.forEach(child => {
+        const key = `${child.tagName.toLowerCase()}-${Array.from(child.classList).sort().join('-')}`;
+        if (!groups.has(key)) {
+          groups.set(key, []);
+        }
+        groups.get(key).push(child);
+      });
+      
+      groups.forEach((group, key) => {
+        if (group.length > 1) {
+          variations.push({
+            pattern: key,
+            count: group.length,
+            variations: group.map(el => ({
+              content: el.textContent?.trim().substring(0, 50) || '',
+              attributes: Object.fromEntries(
+                Array.from(el.attributes).map(attr => [attr.name, attr.value])
+              ),
+            })),
+          });
+        }
+      });
+      
+      return variations;
+    }
+
+    calculateComponentFrequency(element) {
+      const frequency = new Map();
+      const allElements = element.querySelectorAll('*');
+      
+      allElements.forEach(el => {
+        const signature = this.getElementSignature(el);
+        frequency.set(signature, (frequency.get(signature) || 0) + 1);
+      });
+      
+      return Array.from(frequency.entries())
+        .filter(([, count]) => count > 1)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10); // Top 10 most frequent
+    }
+
+    extractCommonPatterns(element) {
+      const patterns = [];
+      
+      // Color patterns
+      const colors = this.extractColorPatterns(element);
+      if (colors.length > 0) {
+        patterns.push({ type: 'color', values: colors });
+      }
+      
+      // Spacing patterns
+      const spacing = this.extractSpacingPatterns(element);
+      if (spacing.length > 0) {
+        patterns.push({ type: 'spacing', values: spacing });
+      }
+      
+      // Typography patterns
+      const typography = this.extractTypographyPatterns(element);
+      if (typography.length > 0) {
+        patterns.push({ type: 'typography', values: typography });
+      }
+      
+      return patterns;
+    }
+
+    identifyAtomicComponents(element) {
+      const atomic = [];
+      const atomicSelectors = [
+        'button',
+        'input',
+        'label',
+        'img',
+        'a',
+        'span',
+        'p',
+        'h1, h2, h3, h4, h5, h6',
+      ];
+      
+      atomicSelectors.forEach(selector => {
+        const elements = element.querySelectorAll(selector);
+        if (elements.length > 0) {
+          atomic.push({
+            type: selector,
+            count: elements.length,
+            examples: Array.from(elements).slice(0, 3).map(el => ({
+              tagName: el.tagName.toLowerCase(),
+              text: el.textContent?.trim().substring(0, 30) || '',
+              classes: Array.from(el.classList),
+            })),
+          });
+        }
+      });
+      
+      return atomic;
+    }
+
+    identifyMolecularComponents(element) {
+      const molecular = [];
+      const molecularSelectors = [
+        '.form-group',
+        '.input-group',
+        '.nav-item',
+        '.card-header',
+        '.card-body',
+        '.media-object',
+        '.list-group-item',
+      ];
+      
+      molecularSelectors.forEach(selector => {
+        const elements = element.querySelectorAll(selector);
+        if (elements.length > 0) {
+          molecular.push({
+            type: selector.replace('.', ''),
+            count: elements.length,
+            composition: this.analyzeComposition(elements[0]),
+          });
+        }
+      });
+      
+      return molecular;
+    }
+
+    // Reusability analysis methods
+    calculateReusabilityScore(element) {
+      let score = 0;
+      
+      // Points for semantic structure
+      if (element.matches('header, nav, main, section, article, aside, footer')) {
+        score += 20;
+      }
+      
+      // Points for reusable classes
+      const reusableClasses = Array.from(element.classList).filter(cls =>
+        /^(btn|card|modal|nav|form|grid|flex)/.test(cls)
+      );
+      score += reusableClasses.length * 10;
+      
+      // Points for consistent structure
+      const children = Array.from(element.children);
+      if (children.length > 1) {
+        const signatures = children.map(child => this.getElementSignature(child));
+        const uniqueSignatures = new Set(signatures);
+        if (uniqueSignatures.size < signatures.length) {
+          score += 15; // Has repeating patterns
+        }
+      }
+      
+      // Points for accessibility
+      if (element.getAttribute('role') || element.getAttribute('aria-label')) {
+        score += 10;
+      }
+      
+      return Math.min(score, 100);
+    }
+
+    determineAbstractionLevel(element) {
+      const depth = this.getElementDepth(element);
+      const childCount = element.children.length;
+      
+      if (depth <= 2 && childCount <= 3) {
+        return 'atomic';
+      }
+      if (depth <= 4 && childCount <= 10) {
+        return 'molecular';
+      }
+      if (depth <= 6 && childCount <= 20) {
+        return 'organism';
+      }
+      return 'template';
+    }
+
+    analyzeDependencies(element) {
+      const dependencies = {
+        css: [],
+        js: [],
+        external: [],
+      };
+      
+      // CSS dependencies from class names
+      const classes = Array.from(element.classList);
+      const frameworkClasses = classes.filter(cls =>
+        /^(bootstrap|tailwind|material|bulma|foundation)/.test(cls)
+      );
+      dependencies.css = frameworkClasses;
+      
+      // JS dependencies from data attributes
+      const jsAttrs = Array.from(element.attributes).filter(attr =>
+        attr.name.startsWith('data-') || attr.name.startsWith('ng-') || attr.name.startsWith('v-')
+      );
+      dependencies.js = jsAttrs.map(attr => attr.name);
+      
+      return dependencies;
+    }
+
+    identifyConfigurationOptions(element) {
+      const options = [];
+      
+      // Data attributes as configuration
+      const dataAttrs = Array.from(element.attributes).filter(attr =>
+        attr.name.startsWith('data-')
+      );
+      dataAttrs.forEach(attr => {
+        options.push({
+          name: attr.name.replace('data-', ''),
+          value: attr.value,
+          type: this.inferDataType(attr.value),
+        });
+      });
+      
+      // Class variations as configuration
+      const classes = Array.from(element.classList);
+      const variants = classes.filter(cls =>
+        /-(sm|md|lg|xl|primary|secondary|success|warning|danger|info)$/.test(cls)
+      );
+      variants.forEach(variant => {
+        options.push({
+          name: 'variant',
+          value: variant,
+          type: 'string',
+        });
+      });
+      
+      return options;
+    }
+
+    analyzeScalabilityFactors(element) {
+      return {
+        responsiveDesign: this.checkResponsiveDesign(element),
+        gridCompatible: this.isGridCompatible(element),
+        flexibleLayout: this.hasFlexibleLayout(element),
+        modularStructure: this.hasModularStructure(element),
+      };
+    }
+
+    assessMaintenanceComplexity(element) {
+      let complexity = 0;
+      
+      // Inline styles increase complexity
+      if (element.style.length > 0) {
+        complexity += element.style.length;
+      }
+      
+      // Deep nesting increases complexity
+      complexity += this.getElementDepth(element) * 2;
+      
+      // Many classes can increase complexity
+      complexity += element.classList.length;
+      
+      // Complex selectors increase complexity
+      const complexSelectors = element.querySelectorAll('[class*=" "], [class*=":"]');
+      complexity += complexSelectors.length;
+      
+      return Math.min(complexity, 100);
+    }
+
+    // Helper utility methods
+    findSimilarSiblings(element, siblings) {
+      const signature = this.getElementSignature(element);
+      return siblings.filter(sibling =>
+        sibling !== element && this.getElementSignature(sibling) === signature
+      ).length;
+    }
+
+    detectSiblingPattern(siblings) {
+      if (siblings.length < 2) return 'single';
+      
+      const signatures = siblings.map(sibling => this.getElementSignature(sibling));
+      const uniqueSignatures = new Set(signatures);
+      
+      if (uniqueSignatures.size === 1) {
+        return 'uniform';
+      }
+      if (uniqueSignatures.size === siblings.length) {
+        return 'diverse';
+      }
+      return 'mixed';
+    }
+
+    hasNestedComponents(element) {
+      const componentSelectors = [
+        '.btn', '.button', '.card', '.modal', '.dropdown',
+        '.nav', '.navbar', '.menu', '.form', '.input',
+      ];
+      
+      return componentSelectors.some(selector =>
+        element.querySelectorAll(selector).length > 0
+      );
+    }
+
+    analyzeCompositionPattern(element) {
+      const children = Array.from(element.children);
+      
+      if (children.length === 0) return 'leaf';
+      if (children.length === 1) return 'wrapper';
+      if (children.every(child => child.tagName === children[0].tagName)) {
+        return 'homogeneous';
+      }
+      return 'heterogeneous';
+    }
+
+    getElementSignature(element) {
+      const tagName = element.tagName.toLowerCase();
+      const classes = Array.from(element.classList).sort().join(' ');
+      const attributes = Array.from(element.attributes)
+        .filter(attr => !['id', 'class', 'style'].includes(attr.name))
+        .map(attr => `${attr.name}="${attr.value}"`)
+        .sort()
+        .join(' ');
+      
+      return `${tagName}[${classes}]{${attributes}}`;
+    }
+
+    extractColorPatterns(element) {
+      const colors = new Set();
+      const computedStyle = window.getComputedStyle(element);
+      
+      // Extract color properties
+      ['color', 'backgroundColor', 'borderColor'].forEach(prop => {
+        const value = computedStyle[prop];
+        if (value && value !== 'rgba(0, 0, 0, 0)' && value !== 'transparent') {
+          colors.add(value);
+        }
+      });
+      
+      return Array.from(colors);
+    }
+
+    extractSpacingPatterns(element) {
+      const spacing = new Set();
+      const computedStyle = window.getComputedStyle(element);
+      
+      // Extract spacing properties
+      ['margin', 'padding', 'gap'].forEach(prop => {
+        const value = computedStyle[prop];
+        if (value && value !== '0px') {
+          spacing.add(value);
+        }
+      });
+      
+      return Array.from(spacing);
+    }
+
+    extractTypographyPatterns(element) {
+      const typography = [];
+      const computedStyle = window.getComputedStyle(element);
+      
+      typography.push({
+        fontFamily: computedStyle.fontFamily,
+        fontSize: computedStyle.fontSize,
+        fontWeight: computedStyle.fontWeight,
+        lineHeight: computedStyle.lineHeight,
+      });
+      
+      return typography;
+    }
+
+    analyzeComposition(element) {
+      const children = Array.from(element.children);
+      return {
+        childCount: children.length,
+        childTypes: children.map(child => child.tagName.toLowerCase()),
+        hasText: element.textContent?.trim().length > 0,
+        hasImages: element.querySelector('img') !== null,
+        hasInteraction: element.querySelector('button, a, input') !== null,
+      };
+    }
+
+    inferDataType(value) {
+      if (value === 'true' || value === 'false') return 'boolean';
+      if (!isNaN(Number(value))) return 'number';
+      if (value.includes(',')) return 'array';
+      return 'string';
+    }
+
+    checkResponsiveDesign(element) {
+      const classes = Array.from(element.classList);
+      return classes.some(cls =>
+        /^(sm|md|lg|xl|mobile|tablet|desktop)/.test(cls)
+      );
+    }
+
+    isGridCompatible(element) {
+      const computedStyle = window.getComputedStyle(element);
+      return computedStyle.display.includes('grid') ||
+             computedStyle.display.includes('flex');
+    }
+
+    hasFlexibleLayout(element) {
+      const computedStyle = window.getComputedStyle(element);
+      return computedStyle.width.includes('%') ||
+             computedStyle.maxWidth !== 'none' ||
+             computedStyle.minWidth !== '0px';
+    }
+
+    hasModularStructure(element) {
+      const children = Array.from(element.children);
+      return children.length > 0 &&
+             children.every(child => child.classList.length > 0);
+    }
+
+    calculateDataComplexity(element) {
+      let complexity = 0;
+      
+      // Count data attributes
+      const dataAttrs = Array.from(element.attributes).filter(attr =>
+        attr.name.startsWith('data-')
+      );
+      complexity += dataAttrs.length * 2;
+      
+      // Count nested elements with data
+      const nestedWithData = element.querySelectorAll('[data-*]');
+      complexity += nestedWithData.length;
+      
+      return complexity;
+    }
+
     generateRouteId(path) {
       return btoa(path)
         .replace(/[^a-zA-Z0-9]/g, '')

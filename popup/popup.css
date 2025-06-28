@@ -330,6 +330,40 @@ body {
   color: #3730a3;
 }
 
+/* View Route Button */
+.btn-view-route {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-view-route:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  color: #111827;
+}
+
+.btn-view-route:active {
+  background: #d1d5db;
+  transform: translateY(1px);
+}
+
+.btn-view-route svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* Empty State */
 .empty-state {
   padding: 48px 24px;
@@ -370,7 +404,7 @@ body {
 .progress-bar {
   width: 100%;
   height: 8px;
-  background: #f3f4f6;
+  background: #e9ecef;
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 8px;
@@ -378,10 +412,9 @@ body {
 
 .progress-fill {
   height: 100%;
-  background: #2563eb;
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
   border-radius: 4px;
   transition: width 0.3s ease;
-  width: 0%;
 }
 
 .progress-text {
@@ -479,4 +512,191 @@ body {
   display: flex;
   justify-content: center;
   gap: 15px;
+}
+
+/* Export Modal Styles */
+.export-modal, .error-modal, .warning-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.export-modal-content, .error-modal-content, .warning-modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.export-modal-content h3, .error-modal-content h3, .warning-modal-content h3 {
+  margin-bottom: 16px;
+  color: #2563eb;
+  font-size: 18px;
+}
+
+.export-options {
+  margin: 20px 0;
+}
+
+.export-option {
+  display: block;
+  padding: 12px;
+  border: 2px solid #e9ecef;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.export-option:hover {
+  border-color: #2563eb;
+  background: #f8f9ff;
+}
+
+.export-option input[type="radio"] {
+  margin-right: 8px;
+}
+
+.export-option span {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.export-option small {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.export-option input[type="radio"]:checked + span {
+  color: #2563eb;
+}
+
+.export-modal-buttons, .error-modal-buttons, .warning-modal-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.error-modal-content {
+  border-left: 4px solid #dc2626;
+}
+
+.warning-modal-content {
+  border-left: 4px solid #f59e0b;
+}
+
+.warning-modal-content ul {
+  background: #fef3c7;
+  padding: 12px;
+  border-radius: 4px;
+  margin: 12px 0;
+  list-style-type: disc;
+  list-style-position: inside;
+}
+
+.warning-modal-content li {
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+/* Enhanced Status Styles */
+.status.warning {
+  background: #fef3c7;
+  color: #92400e;
+  border-left: 4px solid #f59e0b;
+}
+
+.status.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border-left: 4px solid #dc2626;
+}
+
+.status.success {
+  background: #d1fae5;
+  color: #065f46;
+  border-left: 4px solid #10b981;
+}
+
+.status.loading {
+  background: #dbeafe;
+  color: #1e40af;
+  border-left: 4px solid #3b82f6;
+}
+
+/* Enhanced Progress Styles */
+.progress-section {
+  margin: 16px 0;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* Export Button Enhancement */
+.btn.btn-info {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn.btn-info:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn.btn-info:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Animation for export button */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+.btn.btn-info.export-ready {
+  animation: pulse 2s infinite;
 }
