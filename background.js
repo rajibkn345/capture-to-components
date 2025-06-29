@@ -3,6 +3,53 @@ importScripts('lib/db.js');
 
 
 
+// Helper to capture full-page screenshot by scrolling and stitching segments
+async function captureFullPageScreenshot(tab) {
+  const dims = await chrome.scripting.executeScript({
+    target: { tabId: tab.id, world: 'MAIN' },
+    func: () => ({
+      width: document.documentElement.scrollWidth,
+      height: document.documentElement.scrollHeight,
+      viewportHeight: window.innerHeight,
+    }),
+  });
+  const { width, height, viewportHeight } = dims[0].result;
+  const segments = [];
+  const count = Math.ceil(height / viewportHeight);
+  for (let i = 0; i < count; i++) {
+    const scrollY = i * viewportHeight;
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id, world: 'MAIN' },
+      func: y => window.scrollTo(0, y),
+      args: [scrollY],
+    });
+    await new Promise(res => setTimeout(res, 300));
+    segments.push(await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' }));
+  }
+  const stitched = await chrome.scripting.executeScript({
+    target: { tabId: tab.id, world: 'MAIN' },
+    func: (dataUrls, w, h, vh) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      return new Promise(resolve => {
+        let loaded = 0;
+        dataUrls.forEach((dataUrl, idx) => {
+          const img = new Image();
+          img.onload = () => {
+            ctx.drawImage(img, 0, idx * vh);
+            if (++loaded === dataUrls.length) resolve(canvas.toDataURL());
+          };
+          img.src = dataUrl;
+        });
+      });
+    },
+    args: [segments, width, height, viewportHeight],
+  });
+  return stitched[0].result;
+}
+
 class BackgroundService {
   constructor() {
     this.db = new ImageDB();
@@ -329,6 +376,63 @@ class BackgroundService {
     }
   }
 
+  /**
+   * Capture full-page screenshot by scrolling and stitching segments.
+   */
+  async captureFullPageScreenshot(tab) {
+    // Get page and viewport dimensions in the page context
+    const dims = await chrome.scripting.executeScript({
+      target: { tabId: tab.id, world: 'MAIN' },
+      func: () => ({
+        width: document.documentElement.scrollWidth,
+        height: document.documentElement.scrollHeight,
+        viewportHeight: window.innerHeight,
+      }),
+    });
+    const { width, height, viewportHeight } = dims[0].result;
+
+    const segments = [];
+    const count = Math.ceil(height / viewportHeight);
+    for (let i = 0; i < count; i++) {
+      const scrollY = i * viewportHeight;
+      // Scroll within the page context
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id, world: 'MAIN' },
+        func: y => window.scrollTo(0, y),
+        args: [scrollY],
+      });
+      await new Promise(res => setTimeout(res, 300));
+      // Capture visible viewport of the window containing the tab
+      const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+      segments.push({ y: scrollY, dataUrl });
+    }
+
+    // Stitch segments in page context
+    const stitch = await chrome.scripting.executeScript({
+      target: { tabId: tab.id, world: 'MAIN' },
+      func: (segs, w, h) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        return new Promise(resolve => {
+          let loaded = 0;
+          segs.forEach(seg => {
+            const img = new Image();
+            img.onload = () => {
+              ctx.drawImage(img, 0, seg.y);
+              if (++loaded === segs.length) resolve(canvas.toDataURL());
+            };
+            img.src = seg.dataUrl;
+          });
+        });
+      },
+      args: [segments, width, height],
+    });
+
+    return stitch[0].result;
+  }
+
   async processAndCaptureRoute(route) {
     try {
       const tab = await chrome.tabs.create({ url: route.fullUrl, active: true });
@@ -353,8 +457,8 @@ class BackgroundService {
         chrome.tabs.onUpdated.addListener(listener);
       });
 
-      // Capture the visible part of the tab
-      const dataUrl = await chrome.tabs.captureVisibleTab(tab.id, { format: 'png' });
+      // Capture full page screenshot
+      const dataUrl = await captureFullPageScreenshot(tab);
 
       // Save screenshot to the database
       await this.db.saveScreenshot({ id: route.id, routeUrl: route.url, dataUrl });
@@ -385,8 +489,7 @@ class BackgroundService {
       // For current page analysis, skip navigation to avoid modal interference
       const isCurrentPage =
         route.url === 'current-page' ||
-        activeTab.url.includes(route.url) ||
-        route.url === window.location?.pathname;
+        activeTab.url.includes(route.url);
 
       if (!isCurrentPage && route.fullUrl) {
         console.log(`Navigating to route: ${route.fullUrl}`);
@@ -1742,14 +1845,17 @@ class BackgroundService {
       if (includeScreenshots) {
         console.log('Downloading screenshots...');
         try {
-          const screenshotResponse = await this.downloadScreenshots();
+          let screenshotResponse = await this.downloadScreenshots();
+          // Ensure screenshotResponse always has downloaded/failed arrays
+          if (!screenshotResponse.downloaded) screenshotResponse.downloaded = [];
+          if (!screenshotResponse.failed) screenshotResponse.failed = [];
           exportResults.screenshots = screenshotResponse;
-          
           if (!screenshotResponse.success) {
             exportResults.success = false;
           }
         } catch (screenshotError) {
           console.error('Screenshot download failed:', screenshotError);
+          exportResults.screenshots.failed = exportResults.screenshots.failed || [];
           exportResults.screenshots.failed.push({
             type: 'screenshot_download',
             error: screenshotError.message

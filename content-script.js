@@ -377,10 +377,11 @@
       componentSelectors.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         elements.forEach((element, index) => {
+          if (!element) return; // Prevent undefined element errors
           components.push({
             id: `${selector.substring(1)}_${index}`,
             type: selector.substring(1),
-            classes: Array.from(element.classList),
+            classes: Array.from(element.classList || []),
             attributes: this.getElementAttributes(element),
             content: this.extractComponentContent(element),
           });

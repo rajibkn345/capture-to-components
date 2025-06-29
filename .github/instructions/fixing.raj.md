@@ -51,3 +51,25 @@ DO THE FOLLOWING TASKS IN ORDER:
  Export & Error Handling:
    - Provide robust export options for all generated files and images.
    - Implement clear error handling and user feedback for any failed steps.
+
+@workspace
+fix the following issuse when click on the capture the route button:
+1.Route processing failed: ReferenceError: window is not defined - background.js:524 (anonymous function)
+2.Route processing failed: undefined-popup/popup.js:348 (captureRoutes)
+3.Error processing single route: ReferenceError: window is not defined-background.js:1628 (anonymous function)
+4.Page structure analysis failed: TypeError: Cannot read properties of undefined (reading 'classList')-content-script.js:469 (analyzePageStructure)-content-script.js:49 (handleMessage)
+
+---
+@workspace 
+i have seen 41 errors in the code shown at problems tab in the vs code editor, please fix them all and make sure the code runs without any errors.
+note: make sure to check the problem tabs in the editor for any errors and fix them accordingly until the code runs without any errors.
+@workspace
+fix the following issues:
+1. it does not capture the full page screenshot, it only captures the visible part of the page.
+
+@workspace
+fix the following issues:
+1.Route processing failed: Unknown error-popup/popup.js:352 (captureRoutes)
+2.Page structure analysis failed: TypeError: Cannot read properties of undefined (reading 'classList')-content-script.js:470 (analyzePageStructure)
+content-script.js:49 (handleMessage)
+3.Export operation failed: Error: Screenshot export failed: screenshots export failed-popup/popup.js:434 (exportComponents)-popup/popup.html

@@ -210,7 +210,10 @@ class PopupController {
 
         this.renderRoutes();
         this.setStatus(`Found ${this.routes.length} routes`, 'success');
-        document.getElementById('refreshBtn').disabled = false;
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn && refreshBtn instanceof HTMLButtonElement) {
+          refreshBtn.disabled = false;
+        }
       } else {
         // If no routes found, try to add the current page as a route
         this.routes = [
@@ -332,8 +335,7 @@ class PopupController {
         
         // Navigate and capture screenshot for each route
         try {
-          // Send message to background to process and capture route
-          console.log('Sending processAndCaptureRoute message for:', route);
+          // Send message to background and await promise response
           const result = await chrome.runtime.sendMessage({
             action: 'processAndCaptureRoute',
             route: route
@@ -345,11 +347,12 @@ class PopupController {
             processedData.push(result.data);
             console.log('Route processed successfully:', result.data);
           } else {
-            console.error('Route processing failed:', result);
+            const errorMsg = result?.error || 'Unknown error';
+            console.error('Route processing failed:', errorMsg);
             processedData.push({ 
               route: route.url, 
               title: route.title,
-              error: result?.error || 'Unknown error',
+              error: errorMsg,
               timestamp: new Date().toISOString()
             });
           }
@@ -378,7 +381,10 @@ class PopupController {
       console.log('Processed data stored in chrome.storage.local');
       
       this.setStatus('Analysis complete! Ready to export.', 'success');
-      document.getElementById('exportBtn').disabled = false;
+      const exportBtn = document.getElementById('exportBtn');
+      if (exportBtn && exportBtn instanceof HTMLButtonElement) {
+        exportBtn.disabled = false;
+      }
     } catch (error) {
       console.error('Route capture failed:', error);
       this.setStatus('Failed to capture routes: ' + error.message, 'error');
@@ -481,7 +487,11 @@ class PopupController {
       });
 
       document.getElementById('startExport').addEventListener('click', () => {
-        const selectedType = document.querySelector('input[name="exportType"]:checked')?.value;
+        const selectedRadio = document.querySelector('input[name="exportType"]:checked');
+        let selectedType = null;
+        if (selectedRadio && selectedRadio instanceof HTMLInputElement) {
+          selectedType = selectedRadio.value;
+        }
         document.body.removeChild(modal);
         resolve({ exportType: selectedType });
       });
@@ -702,7 +712,7 @@ class PopupController {
 
   setButtonState(buttonId, disabled) {
     const button = document.getElementById(buttonId);
-    if (button) {
+    if (button && button instanceof HTMLButtonElement) {
       button.disabled = disabled;
     }
   }
@@ -710,9 +720,11 @@ class PopupController {
   updateCheckboxes() {
     const checkboxes = document.querySelectorAll('.route-checkbox input[type="checkbox"]');
     checkboxes.forEach(checkbox => {
-      const routeId = checkbox.dataset?.routeId;
-      if (routeId) {
-        checkbox.checked = this.selectedRoutes.has(routeId);
+      if (checkbox instanceof HTMLInputElement && checkbox.dataset) {
+        const routeId = checkbox.dataset.routeId;
+        if (routeId) {
+          checkbox.checked = this.selectedRoutes.has(routeId);
+        }
       }
     });
   }
@@ -823,13 +835,16 @@ class PopupController {
     // Bind checkbox events
     routeList.querySelectorAll('.route-checkbox').forEach(checkbox => {
       checkbox.addEventListener('change', e => {
-        const routeId = e.target.dataset.routeId;
-        if (e.target.checked) {
-          this.selectedRoutes.add(routeId);
-        } else {
-          this.selectedRoutes.delete(routeId);
+        const target = e.target;
+        if (target instanceof HTMLInputElement && target.dataset) {
+          const routeId = target.dataset.routeId;
+          if (target.checked) {
+            this.selectedRoutes.add(routeId);
+          } else {
+            this.selectedRoutes.delete(routeId);
+          }
+          this.updateCaptureButton();
         }
-        this.updateCaptureButton();
       });
     });
 
@@ -838,7 +853,11 @@ class PopupController {
       button.addEventListener('click', e => {
         e.preventDefault();
         e.stopPropagation();
-        const routeUrl = e.currentTarget.dataset.routeUrl;
+        const currentTarget = e.currentTarget;
+        let routeUrl = null;
+        if (currentTarget && currentTarget instanceof HTMLElement && currentTarget.dataset) {
+          routeUrl = currentTarget.dataset.routeUrl;
+        }
         this.openRouteInNewTab(routeUrl);
       });
     });
@@ -846,8 +865,10 @@ class PopupController {
 
   updateRouteSelection() {
     document.querySelectorAll('.route-checkbox').forEach(checkbox => {
-      const routeId = checkbox.dataset.routeId;
-      checkbox.checked = this.selectedRoutes.has(routeId);
+      if (checkbox instanceof HTMLInputElement && checkbox.dataset) {
+        const routeId = checkbox.dataset.routeId;
+        checkbox.checked = this.selectedRoutes.has(routeId);
+      }
     });
   }
 
@@ -863,7 +884,7 @@ class PopupController {
     console.log('- isProcessing:', this.isProcessing);
     console.log('- routes.length:', this.routes.length);
 
-    if (captureBtn) {
+    if (captureBtn && captureBtn instanceof HTMLButtonElement) {
       const shouldDisable = selectedCount === 0;
       captureBtn.disabled = shouldDisable;
       captureBtn.textContent =
@@ -873,7 +894,7 @@ class PopupController {
       console.error('captureBtn not found in DOM!');
     }
     
-    if (exportBtn) {
+    if (exportBtn && exportBtn instanceof HTMLButtonElement) {
       const shouldDisableExport = this.isProcessing || this.routes.length === 0;
       exportBtn.disabled = shouldDisableExport;
       console.log('- exportBtn disabled set to:', shouldDisableExport);
@@ -883,20 +904,25 @@ class PopupController {
   }
 
   showEmptyState() {
-    document.getElementById('emptyState').style.display = 'block';
+    const emptyState = document.getElementById('emptyState');
+    if (emptyState) emptyState.style.display = 'block';
   }
 
   startProcessing() {
     this.isProcessing = true;
-    document.getElementById('progressSection').style.display = 'block';
-    document.getElementById('captureBtn').disabled = true;
-    document.getElementById('exportBtn').disabled = true;
+    const progressSection = document.getElementById('progressSection');
+    if (progressSection) progressSection.style.display = 'block';
+    const captureBtn = document.getElementById('captureBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    if (captureBtn && captureBtn instanceof HTMLButtonElement) captureBtn.disabled = true;
+    if (exportBtn && exportBtn instanceof HTMLButtonElement) exportBtn.disabled = true;
     this.updateProgress(0);
   }
 
   stopProcessing() {
     this.isProcessing = false;
-    document.getElementById('progressSection').style.display = 'none';
+    const progressSection = document.getElementById('progressSection');
+    if (progressSection) progressSection.style.display = 'none';
     this.updateCaptureButton();
   }
 
@@ -923,7 +949,10 @@ class PopupController {
         if (request.success) {
           this.setStatus('Processing complete!', 'success');
           // Re-enable export buttons now that processing is done
-          document.getElementById('exportBtn').disabled = false;
+          const exportBtn = document.getElementById('exportBtn');
+          if (exportBtn && exportBtn instanceof HTMLButtonElement) {
+            exportBtn.disabled = false;
+          }
         } else {
           this.setStatus(`Error: ${request.error}`, 'error');
         }
@@ -1211,24 +1240,22 @@ class PopupController {
   }
 
   getVisibleRoutes() {
-    const searchTerm = document.getElementById('searchInput').value.trim();
-    const filterType = document.getElementById('filterSelect').value;
-
+    const searchInput = document.getElementById('searchInput');
+    const filterSelect = document.getElementById('filterSelect');
+    const searchTerm = searchInput && 'value' in searchInput && typeof searchInput.value === 'string' ? searchInput.value.trim() : '';
+    const filterType = filterSelect && 'value' in filterSelect ? filterSelect.value : 'all';
     let filteredRoutes = [...this.routes];
-
     if (searchTerm) {
       filteredRoutes = filteredRoutes.filter(route =>
         route.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         route.url.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
     if (filterType !== 'all') {
       filteredRoutes = filteredRoutes.filter(
         route => route.type === filterType
       );
     }
-
     return filteredRoutes;
   }
 
@@ -1241,7 +1268,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const popupController = new PopupController();
   
   // Make it globally accessible for debugging
-  window.popupController = popupController;
+  window['popupController'] = popupController;
   
   console.log('PopupController initialized successfully');
 });

@@ -41,4 +41,4 @@ Ultimate Goal:
 - Enable rapid, accurate, and maintainable website cloning by leveraging AI to automate the extraction, documentation, and code generation of reusable components, ensuring the resulting site is modular, scalable, and easy to maintain.
 
 
-NB: Dont modify this file without my permission ,and you must follow this file instruction when executing a prompt.
+NB: Dont modify @instructions.md file without my permission ,and you must follow this file instruction when executing a prompt.
